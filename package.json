@@ -5,10 +5,10 @@
   "type": "module",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
+    "start": "node init && node src/server.js",
+    "dev": "node init && node --watch src/server.js",
     "worker": "node src/queue/worker.js",
-    "dev:worker": "node --watch src/queue/worker.js"
+    "dev:worker": "node init && node --watch src/queue/worker.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.600.0",
