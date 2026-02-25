@@ -11,6 +11,8 @@ services:
     environment:
       - MONGO_URI=mongodb://mongo:27017/transcription
       - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
       - S3_ENDPOINT=http://minio:9000
       - AWS_ACCESS_KEY_ID=minioadmin
       - AWS_SECRET_ACCESS_KEY=minioadmin
@@ -33,6 +35,8 @@ services:
     environment:
       - MONGO_URI=mongodb://mongo:27017/transcription
       - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
       - S3_ENDPOINT=http://minio:9000
       - AWS_ACCESS_KEY_ID=minioadmin
       - AWS_SECRET_ACCESS_KEY=minioadmin

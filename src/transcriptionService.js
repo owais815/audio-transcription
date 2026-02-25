@@ -1,7 +1,7 @@
-import OpenAI from 'openai';
-import { createReadStream } from 'fs';
-import { normalizeAudio, splitAudioIntoChunks, getAudioDuration, cleanupFiles } from './audioProcessor.js';
-import config from './config/index.js';
+import OpenAI from "openai";
+import { createReadStream } from "fs";
+import { normalizeAudio, splitAudioIntoChunks, getAudioDuration, cleanupFiles } from "./audioProcessor.js";
+import config from "./config/index.js";
 
 const openai = new OpenAI({ apiKey: config.openai.apiKey });
 
@@ -12,13 +12,13 @@ const openai = new OpenAI({ apiKey: config.openai.apiKey });
 async function transcribeChunk(chunkPath, timeOffset = 0) {
   const response = await openai.audio.transcriptions.create({
     file: createReadStream(chunkPath),
-    model: 'whisper-1',
-    response_format: 'verbose_json',       // Gives us segments with timestamps
-    timestamp_granularities: ['segment'],  // segment = sentence-level; 'word' for word-level
+    model: "whisper-1",
+    response_format: "verbose_json", // Gives us segments with timestamps
+    timestamp_granularities: ["segment"], // segment = sentence-level; 'word' for word-level
   });
 
   // Offset timestamps so chunks stitch together correctly in the final output
-  const segments = (response.segments || []).map(segment => ({
+  const segments = (response.segments || []).map((segment) => ({
     id: segment.id,
     start: parseFloat((segment.start + timeOffset).toFixed(3)),
     end: parseFloat((segment.end + timeOffset).toFixed(3)),
@@ -51,37 +51,40 @@ export async function transcribeAudio(rawFilePath, options = {}, onProgress = nu
 
   try {
     // Step 1: Normalize to WAV regardless of input format
-    progress('normalizing', 10);
+    progress("normalizing", 10);
     const normalizedPath = await normalizeAudio(rawFilePath);
     tempFiles.push(normalizedPath);
 
     // Step 2: Split into chunks if needed
-    progress('splitting', 20);
+    progress("splitting", 20);
     const chunks = await splitAudioIntoChunks(normalizedPath);
-    tempFiles.push(...chunks.filter(c => c.path !== normalizedPath).map(c => c.path));
+    tempFiles.push(...chunks.filter((c) => c.path !== normalizedPath).map((c) => c.path));
 
     // Step 3: Transcribe all chunks (sequentially to respect API rate limits)
     const chunkResults = [];
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
       const chunkPercent = 20 + Math.round(((i + 1) / chunks.length) * 70);
-      progress('transcribing', chunkPercent);
+      progress("transcribing", chunkPercent);
       const result = await transcribeChunk(chunk.path, chunk.startTime);
       chunkResults.push(result);
     }
 
     // Step 4: Merge results from all chunks
-    progress('merging', 95);
+    progress("merging", 95);
     const mergedSegments = mergeChunkSegments(chunkResults);
-    const fullText = chunkResults.map(r => r.text).join(' ').trim();
+    const fullText = chunkResults
+      .map((r) => r.text)
+      .join(" ")
+      .trim();
 
-    progress('done', 100);
+    progress("done", 100);
 
     return {
       success: true,
       metadata: {
         duration: await getAudioDuration(normalizedPath),
-        language: chunkResults[0]?.language || 'unknown',
+        language: chunkResults[0]?.language || "unknown",
         chunksProcessed: chunks.length,
         processingTimeMs: Date.now() - startedAt,
       },
@@ -91,7 +94,6 @@ export async function transcribeAudio(rawFilePath, options = {}, onProgress = nu
         wordCount: fullText.split(/\s+/).filter(Boolean).length,
       },
     };
-
   } finally {
     // Always clean up, even if transcription failed
     await cleanupFiles(tempFiles);
@@ -103,14 +105,13 @@ export async function transcribeAudio(rawFilePath, options = {}, onProgress = nu
  * Two segments are "duplicate" if they start within 5 seconds of each other and share text.
  */
 function mergeChunkSegments(chunkResults) {
-  const allSegments = chunkResults.flatMap(r => r.segments);
+  const allSegments = chunkResults.flatMap((r) => r.segments);
   const merged = [];
 
   for (const segment of allSegments) {
     const isDuplicate = merged.some(
-      existing =>
-        Math.abs(existing.start - segment.start) < 5 &&
-        existing.text.toLowerCase() === segment.text.toLowerCase()
+      (existing) =>
+        Math.abs(existing.start - segment.start) < 5 && existing.text.toLowerCase() === segment.text.toLowerCase(),
     );
     if (!isDuplicate) merged.push(segment);
   }
