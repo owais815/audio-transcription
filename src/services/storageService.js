@@ -41,8 +41,6 @@ export async function uploadAudioToS3(localFilePath, originalFilename, mimeType)
       Key: s3Key,
       Body: createReadStream(localFilePath),
       ContentType: mimeType,
-      // Server-side encryption at rest
-      ServerSideEncryption: 'AES256',
       Metadata: {
         originalFilename: encodeURIComponent(originalFilename),
       },

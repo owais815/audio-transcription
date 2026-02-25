@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Install deps first (better layer caching — deps change less often than code)
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 COPY . .
 
